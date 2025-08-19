@@ -81,10 +81,11 @@
     }
     void I2C::readFrom(int dest, size_t size) {
     /*!
-     * @brief requests data from destination device
+     * @brief requests data from destination device, stores it in buffer
      * @param dest device ID of source
      * @param size number of bytes to be transferred
      */
+		
     }
     byte I2C::readBuffer() {
      /*!
