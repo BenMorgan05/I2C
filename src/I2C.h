@@ -6,7 +6,7 @@ class I2C {
     int _SDA;
     int _SCL;
     int _frequency;
-    byte _inputBuffer[1024];
+    byte _inputBuffer[32];
     int inBufferCount;
 
 

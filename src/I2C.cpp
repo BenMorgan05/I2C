@@ -39,48 +39,48 @@
      */
 		int clockDelay = 1000000/_frequency; //length of full clock cycle, in microseconds
 		int halfDelay = clockDelay/2;  //length of half clock cycle, in microseconds
-		pinMode(I2C::_SDA, OUTPUT);
+		pinMode(_SDA, OUTPUT);
         byte startByte = dest << 1; // LSB is 0(Write)
 		bool sent = false;
 		while(sent == false) {
-			digitalWrite(I2C::_SDA, HIGH);
-			digitalWrite(I2C::_SCL, HIGH);
+			digitalWrite(_SDA, HIGH);
+			digitalWrite(_SCL, HIGH);
 
-			digitalWrite(I2C::_SDA, LOW); //start condition
+			digitalWrite(_SDA, LOW); //start condition
 			delayMicroseconds(halfDelay);
-			digitalWrite(I2C::_SCL, LOW); //needs to be low for write
+			digitalWrite(_SCL, LOW); //needs to be low for write
 			delayMicroseconds(clockDelay);
 			// shiftOut(I2C::_SDA, I2C::_SCL, MSBFIRST, startByte); // shift out initial byte containing target address and access type
 			for(int i = 0; i < 8; i++) {
-				digitalWrite(I2C::_SDA, startByte & (1 >> 7 - i)); // set SDA to the i'th bit of startByte, starting at the MSB
+				digitalWrite(_SDA, startByte & (1 >> 7 - i)); // set SDA to the i'th bit of startByte, starting at the MSB
 				delayMicroseconds(halfDelay);
-				digitalWrite(I2C::_SCL, HIGH);
+				digitalWrite(_SCL, HIGH);
 				delayMicroseconds(halfDelay);
-				digitalWrite(I2C::_SCL, LOW);
+				digitalWrite(_SCL, LOW);
 			}
-			pinMode(I2C::_SDA, INPUT); // set to input to read ack. If no signal is recieved(neither high nor low sent from target), it is possible to read either a HIGH or LOW signal. 
+			pinMode(_SDA, INPUT_PULLUP); // set to input to read ack.
 			delayMicroseconds(halfDelay);
-			digitalWrite(I2C::_SCL, HIGH);
-			if(!digitalRead(I2C::_SDA)) {
+			digitalWrite(_SCL, HIGH);
+			if(digitalRead(_SDA)) {
 				continue;
 				// if start message fails, restart loop
 			}
 			sent = true;
 			delayMicroseconds(halfDelay);
-			digitalWrite(I2C::_SCL, LOW);
+			digitalWrite(_SCL, LOW);
 			for(int i = 0; i < size; i++) {
 				byte curByte = data[i];
 				for(int j = 0; j < 8; j++) {
-					digitalWrite(I2C::_SDA, startByte & (1 >> 7 - j)); // set SDA to the i'th bit of the current byte, starting at the MSB
+					digitalWrite(_SDA, startByte & (1 >> 7 - j)); // set SDA to the i'th bit of the current byte, starting at the MSB
 					delayMicroseconds(halfDelay);
-					digitalWrite(I2C::_SCL, HIGH);
+					digitalWrite(_SCL, HIGH);
 					delayMicroseconds(halfDelay);
-					digitalWrite(I2C::_SCL, LOW);
+					digitalWrite(_SCL, LOW);
 				}
-				pinMode(I2C::_SDA, INPUT); // set to input to read ack. If no signal is recieved(neither high nor low sent from target), it is possible to read either a HIGH or LOW signal. 
+				pinMode(_SDA, INPUT_PULLUP); // set to input to read ack. If no signal is recieved(neither high nor low sent from target), it is possible to read either a HIGH or LOW signal. 
 				delayMicroseconds(halfDelay);
-				digitalWrite(I2C::_SCL, HIGH);
-				if(!digitalRead(I2C::_SDA)) {
+				digitalWrite(_SCL, HIGH);
+				if(digitalRead(_SDA)) {
 					// if not acknowledged, restart the transfer
 					sent = false;
 					break;
@@ -88,12 +88,12 @@
 			}
 			delayMicroseconds(halfDelay);
 			//set both to low to prepare for STOP signal
-			digitalWrite(I2C::_SCL, 0);
-			digitalWrite(I2C::_SDA, 0);
+			digitalWrite(_SCL, 0);
+			digitalWrite(_SDA, 0);
 
 			//send STOP signal 
-			digitalWrite(I2C::_SCL, 1);
-			digitalWrite(I2C::_SDA, 1);
+			digitalWrite(_SCL, 1);
+			digitalWrite(_SDA, 1);
 
 		}
     }
@@ -103,50 +103,77 @@
      * @param dest device ID of source
      * @param size number of bytes to be transferred
      */
-		pinMode(I2C::_SDA, 1);
-        byte startByte = (dest << 1) + 1; // LSB is 1(Read)
+		int clockDelay = 1000000/_frequency; //length of full clock cycle, in microseconds
+		int halfDelay = clockDelay/2;  //length of half clock cycle, in microseconds
+		pinMode(_SDA, OUTPUT);
+        byte startByte = (dest << 1) + 1; // LSB is 0(Write)
 		bool sent = false;
 		while(sent == false) {
-			digitalWrite(I2C::_SDA, 1);
-			digitalWrite(I2C::_SCL, 1);
-			delay(1000000/_frequency);
+			digitalWrite(_SDA, HIGH);
+			digitalWrite(_SCL, HIGH);
 
-			digitalWrite(I2C::_SDA, 0); //start condition
-			delayMicroseconds(1000000/_frequency);
-			digitalWrite(I2C::_SCL, 0); //needs to be low for write
-
-			tone(I2C::_SCL, _frequency * 1000);
-			shiftOut(I2C::_SDA, I2C::_SCL, MSBFIRST, startByte); // shift out initial byte containing target address and access type
-
-			if(!digitalRead(I2C::_SDA)) {
+			digitalWrite(_SDA, LOW); //start condition
+			delayMicroseconds(halfDelay);
+			digitalWrite(_SCL, LOW); //needs to be low for write
+			delayMicroseconds(clockDelay);
+			// shiftOut(I2C::_SDA, I2C::_SCL, MSBFIRST, startByte); // shift out initial byte containing target address and access type
+			for(int i = 0; i < 8; i++) {
+				digitalWrite(_SDA, startByte & (1 >> 7 - i)); // set SDA to the i'th bit of startByte, starting at the MSB
+				delayMicroseconds(halfDelay);
+				digitalWrite(_SCL, HIGH);
+				delayMicroseconds(halfDelay);
+				digitalWrite(_SCL, LOW);
+			}
+			pinMode(_SDA, INPUT_PULLUP); // set to input to read ack.
+			delayMicroseconds(halfDelay);
+			digitalWrite(_SCL, HIGH);
+			if(digitalRead(_SDA)) {
 				continue;
 				// if start message fails, restart loop
 			}
 			sent = true;
+			delayMicroseconds(halfDelay);
+			digitalWrite(_SCL, LOW);
 			for(int i = 0; i < size; i++) {
-				shiftOut(I2C::_SDA, I2C::_SCL, MSBFIRST, data[i]); // shift out current byte
-				delayMicroseconds(1000000/_frequency); // delay one clock cycle
-				if(!digitalRead(I2C::_SDA)) {
-					// if not acknowledged, restart the transfer
-					sent = false;
+				byte curByte = 0;
+				for(int j = 0; j < 8; j++) {
+					delayMicroseconds(halfDelay);
+					digitalWrite(_SCL, HIGH);
+					curByte += digitalRead(_SDA);
+					curByte << 1;
+					delayMicroseconds(halfDelay);
+					digitalWrite(_SCL, LOW);
+				}
+				pinMode(_SDA, OUTPUT); // set to input to transmit ack.
+				if(inBufferCount <= 31) {
+					_inputBuffer[inBufferCount] = curByte;
+					inBufferCount += 1;
+					digitalWrite(_SCL, LOW); // transmit ack
+				}
+				else {
+					digitalWrite(_SCL, HIGH); // transmit nack, ending transmission as buffer is full
 					break;
 				}
+				delayMicroseconds(halfDelay);
+				digitalWrite(_SCL, HIGH);
 			}
-			noTone(I2C::_SCL);
-
+			delayMicroseconds(halfDelay);
 			//set both to low to prepare for STOP signal
-			digitalWrite(I2C::_SCL, 0);
-			digitalWrite(I2C::_SDA, 0);
+			digitalWrite(_SCL, 0);
+			digitalWrite(_SDA, 0);
 
 			//send STOP signal 
-			digitalWrite(I2C::_SCL, 1);
-			digitalWrite(I2C::_SDA, 1);
+			digitalWrite(_SCL, 1);
+			digitalWrite(_SDA, 1);
 
 		}
     }
     byte I2C::readBuffer() {
      /*!
      * @brief requests a byte of data from the input buffer
-     * @return byte read from buffer
+     * @return most recently recieved byte from buffer that has not been returned yet
      */
+		inBufferCount -= 1;
+		return _inputBuffer[inBufferCount];
+
     }
