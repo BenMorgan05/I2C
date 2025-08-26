@@ -6,7 +6,26 @@
     // int _frequency;
     // byte _inputBuffer[1024];
     // int _inBufferCount;
-
+	bool I2C::sendByte(byte data) {
+	/*!
+     * @brief begins the I2C connection
+     * @param SDA pin for data line
+     * @param SCL pin for clock line
+     * @param freq clock frequency of connection
+     */
+		int halfDelay = (1000000/_frequency)/2;
+		for(int i = 0; i < 8; i++) {
+			digitalWrite(_SDA, data & (1 >> 7 - i)); // set SDA to the i'th bit of the current byte, starting at the MSB
+			delayMicroseconds(halfDelay);
+			digitalWrite(_SCL, HIGH);
+			delayMicroseconds(halfDelay);
+			digitalWrite(_SCL, LOW);
+		}
+		pinMode(_SDA, INPUT_PULLUP); // set to input to read ack.
+		delayMicroseconds(halfDelay);
+		digitalWrite(_SCL, HIGH);
+		return digitalRead(_SDA); // returns true if message was not acknowledged
+	}
 
     // public:
     void I2C::begin(int SDA, int SCL, int freq) {
@@ -50,38 +69,16 @@
 			delayMicroseconds(halfDelay);
 			digitalWrite(_SCL, LOW); //needs to be low for write
 			delayMicroseconds(clockDelay);
-			// shiftOut(I2C::_SDA, I2C::_SCL, MSBFIRST, startByte); // shift out initial byte containing target address and access type
-			for(int i = 0; i < 8; i++) {
-				digitalWrite(_SDA, startByte & (1 >> 7 - i)); // set SDA to the i'th bit of startByte, starting at the MSB
-				delayMicroseconds(halfDelay);
-				digitalWrite(_SCL, HIGH);
-				delayMicroseconds(halfDelay);
-				digitalWrite(_SCL, LOW);
-			}
-			pinMode(_SDA, INPUT_PULLUP); // set to input to read ack.
-			delayMicroseconds(halfDelay);
-			digitalWrite(_SCL, HIGH);
-			if(digitalRead(_SDA)) {
+			if(sendByte(startByte)) {
 				continue;
-				// if start message fails, restart loop
 			}
 			sent = true;
 			delayMicroseconds(halfDelay);
 			digitalWrite(_SCL, LOW);
 			for(int i = 0; i < size; i++) {
 				byte curByte = data[i];
-				for(int j = 0; j < 8; j++) {
-					digitalWrite(_SDA, startByte & (1 >> 7 - j)); // set SDA to the i'th bit of the current byte, starting at the MSB
-					delayMicroseconds(halfDelay);
-					digitalWrite(_SCL, HIGH);
-					delayMicroseconds(halfDelay);
-					digitalWrite(_SCL, LOW);
-				}
-				pinMode(_SDA, INPUT_PULLUP); // set to input to read ack. If no signal is recieved(neither high nor low sent from target), it is possible to read either a HIGH or LOW signal. 
-				delayMicroseconds(halfDelay);
-				digitalWrite(_SCL, HIGH);
-				if(digitalRead(_SDA)) {
-					// if not acknowledged, restart the transfer
+				// send the current byte, if it fails, exit loop and mark as failed
+				if(sendByte(curByte)) {
 					sent = false;
 					break;
 				}

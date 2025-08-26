@@ -9,6 +9,9 @@ class I2C {
     byte _inputBuffer[32];
     int inBufferCount;
 
+	bool sendByte(byte data);
+	void recieveByte(byte data);
+
 
     public:
     I2C();
