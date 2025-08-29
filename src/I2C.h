@@ -10,7 +10,7 @@ class I2C {
     int inBufferCount;
 
 	bool sendByte(byte data);
-	void recieveByte(byte data);
+	bool receiveByte();
 
 
     public:
