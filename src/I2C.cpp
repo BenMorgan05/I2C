@@ -15,7 +15,7 @@
 		digitalWrite(_SCL, LOW);
 		int halfDelay = (1000000/_frequency)/2;
 		for(int i = 0; i < 8; i++) {
-			digitalWrite(_SDA, data & (1 >> 7 - i)); // set SDA to the i'th bit of the current byte, starting at the MSB
+			digitalWrite(_SDA, data & (1 >> (7 - i))); // set SDA to the i'th bit of the current byte, starting at the MSB
 			delayMicroseconds(halfDelay);
 			digitalWrite(_SCL, HIGH);
 			delayMicroseconds(halfDelay);
@@ -27,38 +27,38 @@
 		return digitalRead(_SDA); // returns true if message was not acknowledged
 	}
 
-	bool I2C::receiveByte() {
-	/*!
-     * @brief reads one byte as the controller.
-	 * @return True if receive fails(buffer is full)
-     */	
-		digitalWrite(_SCL, LOW);
-		int halfDelay = (1000000/_frequency)/2;
-		byte receivedByte = 0;
-		for(int i = 0; i < 8; i++) {
-			delayMicroseconds(halfDelay);
-			digitalWrite(_SCL, HIGH);
-			receivedByte += digitalRead(_SDA);
-			receivedByte << 1;
-			delayMicroseconds(halfDelay);
-			digitalWrite(_SCL, LOW);
-		}
-		pinMode(_SDA, OUTPUT); // set to output to transmit ack.
-		if(inBufferCount <= 31) {
-			_inputBuffer[inBufferCount] = receivedByte;
-			inBufferCount += 1;
-			digitalWrite(_SDA, LOW); // transmit ack
-		}
-		else {
-			digitalWrite(_SDA, HIGH); // transmit nack, ending transmission as buffer is full
-			delayMicroseconds(halfDelay);
-			digitalWrite(_SCL, HIGH);
-			return true;
-		}
-		delayMicroseconds(halfDelay);
-		digitalWrite(_SCL, HIGH);
-		return false
-	}
+	// bool I2C::receiveByte() {
+	// /*!
+    //  * @brief reads one byte as the controller.
+	//  * @return True if receive fails(buffer is full)
+    //  */	
+	// 	digitalWrite(_SCL, LOW);
+	// 	int halfDelay = (1000000/_frequency)/2;
+	// 	byte receivedByte = 0;
+	// 	for(unsigned int i = 0; i < 8; i++) {
+	// 		delayMicroseconds(halfDelay);
+	// 		digitalWrite(_SCL, HIGH);
+	// 		receivedByte += digitalRead(_SDA);
+	// 		receivedByte << 1;
+	// 		delayMicroseconds(halfDelay);
+	// 		digitalWrite(_SCL, LOW);
+	// 	}
+	// 	pinMode(_SDA, OUTPUT); // set to output to transmit ack.
+	// 	if(inBufferCount <= 31) {
+	// 		_inputBuffer[inBufferCount] = receivedByte;
+	// 		inBufferCount += 1;
+	// 		digitalWrite(_SDA, LOW); // transmit ack
+	// 	}
+	// 	else {
+	// 		digitalWrite(_SDA, HIGH); // transmit nack, ending transmission as buffer is full
+	// 		delayMicroseconds(halfDelay);
+	// 		digitalWrite(_SCL, HIGH);
+	// 		return true;
+	// 	}
+	// 	delayMicroseconds(halfDelay);
+	// 	digitalWrite(_SCL, HIGH);
+	// 	return false;
+	// }
 
     // public:
     void I2C::begin(int SDA, int SCL, int freq) {
@@ -107,7 +107,7 @@
 			}
 			sent = true;
 			delayMicroseconds(halfDelay);
-			for(int i = 0; i < size; i++) {
+			for(unsigned int i = 0; i < size; i++) {
 				digitalWrite(_SCL, LOW);
 				byte curByte = data[i];
 				// send the current byte, if it fails, exit loop and mark as failed
@@ -127,6 +127,7 @@
 			digitalWrite(_SDA, 1);
 
 		}
+		return true;
     }
     void I2C::readFrom(int dest, size_t size) {
     /*!
@@ -155,7 +156,7 @@
 			received = true;
 			delayMicroseconds(halfDelay);
 			digitalWrite(_SCL, LOW);
-			for(int i = 0; i < size; i++) {
+			for(unsigned int i = 0; i < size; i++) {
 				byte curByte = 0;
 				for(int j = 0; j < 8; j++) {
 					delayMicroseconds(halfDelay);
