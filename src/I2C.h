@@ -1,7 +1,7 @@
 #ifndef I2C_H
 #define I2C_H
 #include "arduino.h"
-class I2C {
+class SI2C {
     private:
     int _SDA;
     int _SCL;
@@ -14,7 +14,7 @@ class I2C {
 
 
     public:
-    I2C();
+    SI2C();
     void begin(int SDA, int SCL, int freq);
     /*!
      * @brief begins the I2C connection
@@ -47,7 +47,7 @@ class I2C {
 };
 
 
-
+extern SI2C I2C;
 
 
 
