@@ -141,12 +141,12 @@
     }
     void SI2C::readFrom(int dest, size_t size) {
     /*!
-     * @brief requests data from destination device, stores it in buffer
+     * @brief requests data from destination device, stores it in buffer to be retrieved with readBuffer()
      * @param dest device ID of source
-     * @param size number of bytes to be transferred
+     * @param size number of bytes to be read
      */
-		int clockDelay = 1000000/_frequency; //length of full clock cycle, in microseconds
-		int halfDelay = clockDelay/2;  //length of half clock cycle, in microseconds
+		unsigned int clockDelay = 1000000/_frequency; //length of full clock cycle, in microseconds
+		unsigned int halfDelay = clockDelay/2;  //length of half clock cycle, in microseconds
 		pinMode(_SDA, OUTPUT);
         byte startByte = (dest << 1) + 1; // LSB is 0(Write)
 		bool received = false;
@@ -166,28 +166,43 @@
 			received = true;
 			delayMicroseconds(halfDelay);
 			digitalWrite(_SCL, LOW);
-			for(unsigned int i = 0; i < size; i++) {
+			delayMicroseconds(clockDelay); //extra delay needed(im guess because clock stretching not supported, other side still setting up)
+			for(int i = 0; i < size; i++) {
+				pinMode(_SDA, INPUT_PULLUP);
 				byte curByte = 0;
 				for(int j = 0; j < 8; j++) {
 					delayMicroseconds(halfDelay);
 					digitalWrite(_SCL, HIGH);
-					curByte += digitalRead(_SDA);
-					curByte << 1;
-					delayMicroseconds(halfDelay);
+					delayMicroseconds(clockDelay);
+					bool a = digitalRead(_SDA);
+					byte temp = curByte;
+					curByte = temp + a;
+					if(j < 7) {
+						curByte <<= 1;
+					}
+					
 					digitalWrite(_SCL, LOW);
 				}
-				pinMode(_SDA, OUTPUT); // set to input to transmit ack.
+				pinMode(_SDA, OUTPUT); // set to output to transmit ack.
+				delayMicroseconds(halfDelay);
 				if(inBufferCount <= 31) {
 					_inputBuffer[inBufferCount] = curByte;
 					inBufferCount += 1;
-					digitalWrite(_SCL, LOW); // transmit ack
+					if(i == size - 1) {
+						digitalWrite(_SDA, HIGH); // transmit nack as this is last byte received
+					}
+					else {
+						digitalWrite(_SDA, LOW); // transmit ack
+					}
 				}
 				else {
-					digitalWrite(_SCL, HIGH); // transmit nack, ending transmission as buffer is full
+					digitalWrite(_SDA, HIGH); // transmit nack, ending transmission as buffer is full
 					break;
 				}
 				delayMicroseconds(halfDelay);
 				digitalWrite(_SCL, HIGH);
+				delayMicroseconds(halfDelay);
+				digitalWrite(_SCL, LOW);
 			}
 			delayMicroseconds(halfDelay);
 			//set both to low to prepare for STOP signal
